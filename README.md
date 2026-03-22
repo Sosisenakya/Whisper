@@ -52,16 +52,17 @@ wally install
 ```luau
 --!strict
 local ServerScriptService = game:GetService("ServerScriptService")
-local Whisper = require(ServerScriptService.Packages.Whisper)
+local Whisper = require(ServerScriptService.Whisper)
 
 -- Listen for incoming messages
 local connection = Whisper.Listen("GlobalChat", function(message, timeSent)
-    print(`[{message.data.Sender}]: {message.data.Text}`)
+	print(`[{message.data.Sender}]: {message.data.Text}`)
 end)
 
 -- Queue a message to be sent
 Whisper.Queue("GlobalChat", {
-    Text = "Hello from another server!"
+	Sender = "sosisenakya",
+	Text = "Hello from another server!"
 }, "Medium")
 ```
 
