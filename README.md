@@ -1,7 +1,7 @@
 # Whisper
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square" alt="License" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/📦_Wally-yourname%2Fwhisper-00b4ab?style=flat-square" alt="Wally" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/📦_Wally-sosisenakya%2Fwhisper-00b4ab?style=flat-square" alt="Wally" /></a>
   <a href="#"><img src="https://img.shields.io/badge/📖_Docs-GitHub_Pages-8b5cf6?style=flat-square" alt="Documentation" /></a>
 </p>
 
