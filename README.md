@@ -75,15 +75,6 @@ Whisper.Queue("PlayerMetrics", {Id = 123, Playtime = 500}, "Low")
 -- This jumps to the front of the queue and is sent in the very next batch
 Whisper.Queue("ServerShutdown", {Reason = "Update"}, "High")
 ```
-To make this as easy as possible for you to copy-paste into your project, I have formatted the README.md documentation inside a code block. You can copy the entire block below and paste it directly into a README.md file in your repository or a StringValue in Roblox Studio.
-
-Markdown
-# Whisper Messaging Service
-
-A high-performance, buffered, and batched wrapper for Roblox's `MessagingService`. Designed for modular game architectures, Whisper handles rate-limiting, priority queuing, and duplicate prevention automatically.
-
----
-
 ## API Reference
 
 ### Global Configuration
