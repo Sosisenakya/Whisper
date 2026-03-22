@@ -56,7 +56,7 @@ local Whisper = require(ServerScriptService.Packages.Whisper)
 
 -- Listen for incoming messages
 local connection = Whisper.Listen("GlobalChat", function(message, timeSent)
-    print(string.format("[%s]: %s", message.data.Sender, message.data.Text))
+    print(`[{message.data.Sender}]: {message.data.Text}`)
 end)
 
 -- Queue a message to be sent
@@ -64,6 +64,7 @@ Whisper.Queue("GlobalChat", {
     Text = "Hello from another server!"
 }, "Medium")
 ```
+
 Using Priority
 When your server is under heavy load, Whisper ensures critical data skips the line.
 
