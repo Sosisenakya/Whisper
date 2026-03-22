@@ -46,92 +46,110 @@ wally install
 ### Manual Installation
 
 1. Download the latest release
-2. Place the `Whisper` folder in your `ReplicatedStorage.Packages`
+2. Place the `Whisper` folder in your `ServerScriptService.Packages`
 3. Require it in your scripts
 
-
-Cuplikan kode
+## Quick Start
+```luau
 --!strict
 local ServerScriptService = game:GetService("ServerScriptService")
-local Whisper = require(ServerScriptService.Whisper)
+local Whisper = require(ServerScriptService.Packages.Whisper)
 
--- 1. Listen for incoming messages
+-- Listen for incoming messages
 local connection = Whisper.Listen("GlobalChat", function(message, timeSent)
     print(string.format("[%s]: %s", message.data.Sender, message.data.Text))
 end)
 
--- 2. Queue a message to be sent
+-- Queue a message to be sent
 Whisper.Queue("GlobalChat", {
-    Sender = "Player1",
     Text = "Hello from another server!"
 }, "Medium")
+```
 Using Priority
 When your server is under heavy load, Whisper ensures critical data skips the line.
 
-Cuplikan kode
+```luau
 -- This will be batched and sent whenever space is available
 Whisper.Queue("PlayerMetrics", {Id = 123, Playtime = 500}, "Low")
 
 -- This jumps to the front of the queue and is sent in the very next batch
 Whisper.Queue("ServerShutdown", {Reason = "Update"}, "High")
-API Reference
-Whisper.Queue(topic: string, data: any, priority: Priority?)
-Adds a message to the outbound queue.
+```
+To make this as easy as possible for you to copy-paste into your project, I have formatted the README.md documentation inside a code block. You can copy the entire block below and paste it directly into a README.md file in your repository or a StringValue in Roblox Studio.
 
-topic: The MessagingService topic.
+Markdown
+# Whisper Messaging Service
 
-data: A JSON-serializable table or value. Must be under ~950 bytes after middleware processing.
+A high-performance, buffered, and batched wrapper for Roblox's `MessagingService`. Designed for modular game architectures, Whisper handles rate-limiting, priority queuing, and duplicate prevention automatically.
 
-priority: "High", "Medium", or "Low" (Defaults to "Medium").
+---
 
-Whisper.Listen(topic: string, callback: function): RBXScriptConnection
-Subscribes to a topic. The callback provides the processed Message<T> and the timeSent timestamp.
+## API Reference
 
-Returns: A standard RBXScriptConnection that can be disconnected.
+### Global Configuration
 
-Whisper.Unlisten(topic: string): boolean
-Disconnects the active listener for a specific topic.
+#### `Whisper.Use(direction: MiddlewareDirection, fn: MiddlewareFn)`
+Registers a middleware function to intercept and transform data.
+- **Parameters:**
+    - `direction`: `"In"` (for received messages) or `"Out"` (for queued messages)
+    - `fn`: A middleware function `(topic: string, data: any) -> any`
 
-Whisper.Dequeue(topic: string): Message<T>?
-Manually removes and returns the highest-priority, oldest message currently sitting in the local queue for a specific topic.
+---
 
-Whisper.Use(direction: "In" | "Out", fn: function)
-Registers a global middleware hook that processes data before it is encoded (Out) or before it is sent to a listener (In).
+### Outbound Messaging (Queueing)
 
-Advanced Features
-The Middleware Pipeline
-Whisper allows you to transform data globally without changing your core game logic. This is incredibly useful for Data Minification to squeeze more data into the 1KB limit.
+#### `Whisper.Queue(topic: string, data: T, priority: Priority?)`
+Adds a message to the internal outbound queue. Messages are automatically sorted by priority and batched by topic to stay within Roblox's 1KB limit.
+- **Parameters:**
+    - `topic`: The `MessagingService` topic string
+    - `data`: The JSON-serializable payload (Max **920 bytes**)
+    - `priority` (optional): `"High"`, `"Medium"`, or `"Low"` (Defaults to `"Medium"`)
 
-Cuplikan kode
-local Whisper = require(ServerScriptService.Whisper)
+#### `Whisper.Dequeue(): Message<T>?`
+Removes and returns the absolute first message (highest priority/oldest) from the queue.
 
--- OUTBOUND: Shrink the keys before it goes over the network
-Whisper.Use("Out", function(topic, data)
-    if topic == "PlayerUpdate" then
-        return {
-            p = data.Position,
-            h = data.Health
-        }
-    end
-    return data
-end)
+#### `Whisper.DequeueTopic(topic: string): Message<T>?`
+Searches the queue for the first message matching the specified `topic`, removes it, and returns it.
 
--- INBOUND: Expand the keys back so your scripts see the full names
-Whisper.Use("In", function(topic, data)
-    if topic == "PlayerUpdate" then
-        return {
-            Position = data.p,
-            Health = data.h
-        }
-    end
-    return data
-end)
+---
 
--- Your game logic remains clean and readable!
-Whisper.Queue("PlayerUpdate", { Position = Vector3.new(0, 10, 0), Health = 100 })
-Performance Tips
-Keep Data Small: Even though Whisper batches messages, Roblox has a hard limit of 1KB per PublishAsync call. Use Middleware to compress large strings or remove unnecessary keys.
+### Inbound Messaging (Listening)
 
-Understand the Cooldown: Whisper calculates a dynamic send rate based on your active player count to prevent rate-limit throttling. Messages are not "instant" but are highly reliable.
+#### `Whisper.Listen(topic: string, callback: (message: Message<T>, timeSent: number) -> ()): RBXScriptConnection`
+Subscribes to a topic. Automatically handles de-batching of incoming arrays and filters out duplicate message IDs.
+- **Parameters:**
+    - `topic`: The topic to subscribe to
+    - `callback`: Function triggered on message receipt
+        - `message`: Table containing `id`, `topic`, and `data`
+        - `timeSent`: Unix timestamp provided by Roblox
+- **Returns:** An `RBXScriptConnection` used to stop listening.
 
-Use "Low" Priority for Analytics: Background data like player metrics or heatmaps should always use "Low" priority so they don't block critical cross-server events like Matchmaking.
+#### `Whisper.Unlisten(topic: string): boolean`
+Disconnects the listener for a specific topic.
+- **Returns:** `true` if a connection was successfully disconnected, `false` otherwise.
+
+---
+
+### Internal / Testing Hooks
+
+#### `Whisper._mockPublish` (Property)
+A function `(topic: string, payload: any) -> ()` that overrides the real `MessagingService:PublishAsync`. Use this for unit testing or benchmarks.
+
+#### `Whisper._ignoreCooldown` (Property)
+A boolean. If set to `true`, the module will bypass the calculated `task.wait()` based on player count, allowing for instant queue processing in test environments.
+
+---
+
+### Type Definitions (Luau)
+
+```lua
+export type Priority = "Low" | "Medium" | "High"
+
+export type Message<T> = {
+	id: string,
+	topic: string,
+	data: T,
+}
+
+export type MiddlewareDirection = "In" | "Out"
+export type MiddlewareFn = (topic: string, data: any) -> any
