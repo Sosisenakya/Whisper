@@ -28,27 +28,27 @@ Whisper is a powerful wrapper for Roblox's MessagingService designed to maximize
 - **Zero Dependencies**: Standalone library with no external requirements
 
 
-Installation
-Using Wally
-Add Whisper to your wally.toml:
+## Installation
+### Using Wally
+Add Whisper to your `wally.toml`:
 
-Ini, TOML
+```toml
 [dependencies]
-Whisper = "yourname/whisper@1.0.0"
+Whisper = "sosisenakya/whisper@0.0.1"
+```
+
 Then run:
 
-Bash
+```bash
 wally install
-Manual Installation
-Download the latest release.
+```
 
-Place the Whisper module script inside game.ServerScriptService (or ReplicatedStorage.Packages if using a shared directory).
+### Manual Installation
 
-Require it in your server scripts.
+1. Download the latest release
+2. Place the `Whisper` folder in your `ReplicatedStorage.Packages`
+3. Require it in your scripts
 
-Quick Start
-Basic Pub/Sub
-Whisper acts as a drop-in replacement for standard cross-server messaging, but with built-in batching.
 
 Cuplikan kode
 --!strict
