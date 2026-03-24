@@ -120,16 +120,22 @@ A boolean. If set to `true`, the module will bypass the calculated `task.wait()`
 
 ---
 
-### Type Definitions (Luau)
+### Type Definitions
 
 ```lua
-export type Priority = "Low" | "Medium" | "High"
+export type Priority = "High" | "Medium" | "Low" | string
 
 export type Message<T> = {
-	id: string,
-	topic: string,
-	data: T,
+    id: string,
+    topic: string,
+    data: T,
 }
 
-export type MiddlewareDirection = "In" | "Out"
-export type MiddlewareFn = (topic: string, data: any) -> any
+export type TopicObject<T> = {
+    Name: string,
+    Listen: (self: TopicObject<T>, callback: (message: Message<T>, timeSent: number) -> ()) -> RBXScriptConnection,
+    Unlisten: (self: TopicObject<T>) -> boolean,
+    Queue: (self: TopicObject<T>, data: T, priority: Priority?) -> (),
+    DropNext: (self: TopicObject<T>) -> (),
+}
+```
