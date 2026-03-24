@@ -112,7 +112,7 @@ Disconnects the listener specifically for this topic object and cleans up intern
 
 ### Internal / Testing Hooks
 
-#### `Whisper._mockPublish` (Property)
+#### `Whisper._mockPublishAsync` (Property)
 A function `(topic: string, payload: any) -> ()` that overrides the real `MessagingService:PublishAsync`. Use this for unit testing or benchmarks.
 
 #### `Whisper._ignoreCooldown` (Property)
