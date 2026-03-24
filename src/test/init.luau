@@ -1,5 +1,5 @@
 --!strict
-local Whispers = require(workspace.Whisper.Whispers)
+local Whispers = require(path.to.Whispers)
 
 Whispers.Topics.GlobalChat:Listen(function(message, timeSent)
 	print(`Received chat from {message.data.Speaker}: {message.data.Message}`)
