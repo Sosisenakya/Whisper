@@ -43,9 +43,6 @@ export type Response<T> = {
 }
 
 export type WhisperAPI<T> = {
-	-- Clear entire topic's queue + Destroy the :Listen of that topic
-	DestroyTopic: (topic: string) -> Message<T>?,
-
 	RegisterTopic: (topicName: string) -> TopicObject<T>, -- Add a new topic
 	RegisterPriority: (name: string, weight: number) -> string, -- Add a new priority (weight must be distinct)
 	RegisterHook: (direction: MiddlewareDirection, fn: MiddlewareFn) -> (), -- Add data processor (e.g. serializer)
@@ -474,23 +471,6 @@ end
 --------------------------------------------------------------------------------
 -- PUBLIC API
 --------------------------------------------------------------------------------
-function Whisper.DestroyTopic<T>(topic: string): ()
-	local curr = Queue.Head
-
-	while curr do
-		local nextNode = curr.Next
-		if curr.message.topic == topic then
-			removeNode(curr)
-		end
-		curr = nextNode
-	end
-
-	if messageSubscribeConn[topic] then
-		messageSubscribeConn[topic]:Disconnect()
-		messageSubscribeConn[topic] = nil
-	end
-end
-
 function Whisper.RegisterTopic<T>(topicName: string): TopicObject<T>
 	if typeof(topicName) ~= "string" then
 		error(`Topic must be a string, got: {typeof(topicName)}`, 2)
