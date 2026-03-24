@@ -11,10 +11,7 @@
 Whisper is a powerful wrapper for Roblox's MessagingService designed to maximize your cross-server rate limits while ensuring reliable data delivery. It automatically batches small messages, sorts them by priority, prevents duplicate processing, and features a robust middleware pipeline for on-the-fly data transformation.
 
 ## Features
-- **3 Priority Queuing Modes**
-  - High
-  - Medium
-  - Low
+- **Priority Queuing**: Prioritize message with higher priority weight (you can add more with .RegisterPriority)
     
 - **Automated Batching**: Safely bundles multiple messages into a single 1KB payload to bypass strict MessagingService rate limits
 
@@ -33,7 +30,7 @@ Add Whisper to your `wally.toml`:
 
 ```toml
 [dependencies]
-Whisper = "sosisenakya/whisper@0.0.1"
+Whisper = "sosisenakya/whisper@1.0.0"
 ```
 
 Then run:
@@ -46,79 +43,70 @@ wally install
 
 1. Download the latest release
 2. Place the `Whisper` folder in your `ServerScriptService.Packages`
-3. Require it in your scripts
+3. Require Whisper.Whispers in your scripts
 
 ## Quick Start
+
+The best way to use Whisper is through the `Whispers` wrapper. This provides full Type-Checking and keeps your network topics organized in one place.
+
 ```luau
 --!strict
-local ServerScriptService = game:GetService("ServerScriptService")
-local Whisper = require(ServerScriptService.Whisper)
+local Whispers = require(path.to.Whisper.Whispers)
 
--- Listen for incoming messages
-local connection = Whisper.Listen("GlobalChat", function(message, timeSent)
-	print(`[{message.data.Sender}]: {message.data.Text}`)
+-- 1. Listen for incoming messages
+Whispers.Topics.GlobalChat:Listen(function(message, timeSent)
+    print(`[{message.data.Speaker}]: {message.data.Message}`)
 end)
 
--- Queue a message to be sent
-Whisper.Queue("GlobalChat", {
-	Sender = "sosisenakya",
-	Text = "Hello from another server!"
-}, "Medium")
+-- 2. Queue a message to be sent
+-- This uses the "Urgent" priority defined in the wrapper (you can customize it)
+Whispers.Topics.GlobalChat:Queue({
+    Speaker = "System",
+    Message = "Server Restarting..."
+}, "Critical") -- "Critical" is replacable with Whispers.Priorities.Critical (it has intellisense support)
 ```
-
-Using Priority
-When your server is under heavy load, Whisper ensures critical data skips the line.
-
-```luau
--- This will be batched and sent whenever space is available
-Whisper.Queue("PlayerMetrics", {Id = 123, Playtime = 500}, "Low")
-
--- This jumps to the front of the queue and is sent in the very next batch
-Whisper.Queue("ServerShutdown", {Reason = "Update"}, "High")
-```
+---
 ## API Reference
 
 ### Global Configuration
 
-#### `Whisper.Use(direction: MiddlewareDirection, fn: MiddlewareFn)`
-Registers a middleware function to intercept and transform data.
+#### `Whisper.RegisterTopic(topicName: string): TopicObject<T>`
+Creates and returns a new `TopicObject`. All messaging for a specific channel must now be handled through this object to ensure strict typing
+- **Parameters:**
+    - `topicName`: The `MessagingService` topic string used for cross-server communication
+
+#### `Whisper.RegisterPriority(name: string, weight: number): string`
+Registers a custom priority level with a specific numerical weight. Higher weights are prioritized by the internal scheduler
+- **Parameters:**
+    - `name`: The unique priority string (e.g., `"Ultimate"`)
+    - `weight`: A number representing importance. (Built-ins: `High=3`, `Medium=2`, `Low=1`)
+
+#### `Whisper.RegisterHook(direction: MiddlewareDirection, fn: MiddlewareFn)`
+Registers a middleware function to intercept and transform data (formerly `Use`)
 - **Parameters:**
     - `direction`: `"In"` (for received messages) or `"Out"` (for queued messages)
-    - `fn`: A middleware function `(topic: string, data: any) -> any`
+    - `fn`: A function `(topic: string, data: any) -> any` that returns the transformed data
 
 ---
 
-### Outbound Messaging (Queueing)
+### Topic Object Methods
 
-#### `Whisper.Queue(topic: string, data: T, priority: Priority?)`
-Adds a message to the internal outbound queue. Messages are automatically sorted by priority and batched by topic to stay within Roblox's 1KB limit.
+#### `Topic:Queue(data: T, priority: Priority?)`
+Adds a message to the internal linked-list outbound queue for this specific topic
 - **Parameters:**
-    - `topic`: The `MessagingService` topic string
-    - `data`: The JSON-serializable payload (Max **920 bytes**)
-    - `priority` (optional): `"High"`, `"Medium"`, or `"Low"` (Defaults to `"Medium"`)
+    - `data`: The JSON-serializable payload (Max **950 bytes**)
+    - `priority` (optional): `"High"`, `"Medium"`, `"Low"`, or a custom registered string. Defaults to `"Medium"`
 
-#### `Whisper.Dequeue(): Message<T>?`
-Removes and returns the absolute first message (highest priority/oldest) from the queue.
+#### `Topic:DropNext()`
+Searches the queue from newest to oldest and removes the first message matching this topic. This is useful for "cancelling" a request (e.g., a player leaves a queue) before it is sent (formerly `Dequeue`)
 
-#### `Whisper.DequeueTopic(topic: string): Message<T>?`
-Searches the queue for the first message matching the specified `topic`, removes it, and returns it.
+#### `Topic:Listen(callback: (message: Message<T>, timeSent: number) -> ()): RBXScriptConnection`
+Subscribes to the topic. This method automatically handles de-batching of incoming arrays, runs "In" middleware, and filters out duplicate message IDs
+- **Returns:** An `RBXScriptConnection` used to stop listening
 
----
-
-### Inbound Messaging (Listening)
-
-#### `Whisper.Listen(topic: string, callback: (message: Message<T>, timeSent: number) -> ()): RBXScriptConnection`
-Subscribes to a topic. Automatically handles de-batching of incoming arrays and filters out duplicate message IDs.
-- **Parameters:**
-    - `topic`: The topic to subscribe to
-    - `callback`: Function triggered on message receipt
-        - `message`: Table containing `id`, `topic`, and `data`
-        - `timeSent`: Unix timestamp provided by Roblox
-- **Returns:** An `RBXScriptConnection` used to stop listening.
-
-#### `Whisper.Unlisten(topic: string): boolean`
-Disconnects the listener for a specific topic.
-- **Returns:** `true` if a connection was successfully disconnected, `false` otherwise.
+#### `Topic:Unlisten(): boolean`
+Disconnects the listener specifically for this topic object and cleans up internal references
+- **Returns:** `true` if a connection was successfully disconnected, `false` otherwise
 
 ---
 
