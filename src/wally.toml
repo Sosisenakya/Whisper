@@ -1,0 +1,9 @@
+[package]
+name = "sosisenakya/whisper"
+version = "1.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+authors = ["sosisenakya"]
+description = "Wrapper for MessagingService designed to maximize your cross-server rate limits while ensuring reliable data delivery"
+exclude = ["roblox-direct", "docs"]
+license = "Apache-2.0"

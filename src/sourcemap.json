@@ -1,0 +1,1 @@
+{"name":"whisper","className":"ModuleScript","filePaths":["src/init.luau","default.project.json"],"children":[{"name":"test","className":"ModuleScript","filePaths":["src/test/init.luau"]},{"name":"wrapper","className":"ModuleScript","filePaths":["src/wrapper/init.luau"]}]}
